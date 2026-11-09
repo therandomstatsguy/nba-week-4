@@ -3785,12 +3785,16 @@ function Comparison({ cmp, sc, clear, onOpen, period }) {
     ? [{ l: GWL + " Games", get: (p) => roundGames(p.tm, FNEXT).length }, { l: "Price", get: (p) => p.price, money: 1, bad: 1 }, { l: "Own %", get: (p) => p.own, d: 1 }, { l: "Capt %", get: (p) => p.capt, d: 1 }]
       .concat(common, [{ l: "Missed Shots", get: (p) => { const r = rr(p); return r.length ? r.reduce((s, x) => s + missed(x), 0) / r.length : null; }, d: 1, bad: 1 }],
         [["reb", "Rebounds"], ["ast", "Assists"], ["blk", "Blocks"], ["stl", "Steals"], ["tov", "Turnovers", 1]].map(([k, l, b]) => ({ l, get: A(k), d: 1, bad: b })), thr)
-    : [{ l: GWL + " Games", get: (p) => roundGames(p.tm, FNEXT).length }, { l: "Ownership Trend", get: (p) => p.eChg, d: 2, sign: 1 }, { l: GWL + " Proj", get: (p) => rdProj(p, sc, FNEXT) }]
-      .concat(common.filter((r) => r.l !== "Points"), [{ l: "Points", get: A("pts"), d: 1 }, { l: "FG Made", get: A("fgm"), d: 1 }, { l: "FG Attempted", get: A("fga"), d: 1 }, { l: "FG %", get: pc("fgm", "fga"), d: 1, pct: 1 },
-        { l: "3PT Made", get: A("tpm"), d: 1 }, { l: "3PT Attempted", get: A("tpa"), d: 1 }, { l: "3PT %", get: pc("tpm", "tpa"), d: 1, pct: 1 }],
-        [["ast", "Assists"], ["reb", "Rebounds"], ["stl", "Steals"], ["blk", "Blocks"], ["tov", "Turnovers", 1]].map(([k, l, b]) => ({ l, get: A(k), d: 1, bad: b })), thr);
+    // ESPN: made / attempted rows compare on makes per game
+    : [{ l: "Games", get: (p) => rr(p).length }, { l: "Minutes", get: A("min"), d: 1 },
+       { l: "Ownership % (" + GWL + ")", get: (p) => p.eOwn, d: 1 }, { l: "Ownership Trend (" + GWL + ")", get: (p) => p.eChg, d: 2, sign: 1 },
+       { l: "Points", get: A("pts"), d: 1 },
+       { l: "FGs Made / Attempted", get: A("fgm"), txt: (p) => nn(favgK(rr(p), "fgm"), 1) + " / " + nn(favgK(rr(p), "fga"), 1) }, { l: "FG %", get: pc("fgm", "fga"), d: 1, pct: 1 },
+       { l: "FTs Made / Attempted", get: A("ftm"), txt: (p) => nn(favgK(rr(p), "ftm"), 1) + " / " + nn(favgK(rr(p), "fta"), 1) }, { l: "FT %", get: pc("ftm", "fta"), d: 1, pct: 1 },
+       { l: "3PT Made / Attempted", get: A("tpm"), txt: (p) => nn(favgK(rr(p), "tpm"), 1) + " / " + nn(favgK(rr(p), "tpa"), 1) }, { l: "3PT %", get: pc("tpm", "tpa"), d: 1, pct: 1 }]
+      .concat([["reb", "Rebounds"], ["ast", "Assists"], ["stl", "Steals"], ["blk", "Blocks"], ["tov", "Turnovers", 1]].map(([k, l, b]) => ({ l, get: A(k), d: 1, bad: b })));
   const bestIdx = (r) => { let bi = null, bv = null; ps.forEach((p) => { const v = r.get(p); if (v == null) return; if (bv == null || (r.bad ? v < bv : v > bv)) { bv = v; bi = p.pid; } }); const vals = ps.map((p) => r.get(p)).filter((v) => v != null); if (vals.length > 1 && vals.every((v) => v === vals[0])) return null; return bi; };
-  const fmt = (r, p) => { const v = r.get(p); return v == null ? "–" : r.money ? money(v) : r.pct ? v.toFixed(1) + "%" : r.sign ? (v > 0 ? "+" : "") + nn(v, r.d) + "%" : nn(v, r.d); };
+  const fmt = (r, p) => { const v = r.get(p); return v == null ? "–" : r.txt ? r.txt(p) : r.money ? money(v) : r.pct ? v.toFixed(1) + "%" : r.sign ? (v > 0 ? "+" : "") + nn(v, r.d) + "%" : nn(v, r.d); };
   const jump = () => { const el = document.getElementById("fx-explorer-top"); if (el) el.scrollIntoView({ behavior: "smooth", block: "start" }); };
   const hdr = (p) => html`<th className="cmp-h" style=${{ background: color(p.tm), color: txtOn(color(p.tm)), position: "relative" }}><div style=${{ textAlign: "center", padding: "0 10px" }}>
     <b className="fx-nmlink cmp-nm" onClick=${() => onOpen(p)}>${rNm(p.n)}</b>
